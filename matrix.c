@@ -93,17 +93,33 @@ int *getRow(M m, int col) {
 	return row;
 }
 
-
-
-// in progress
-int determinant(M m) {
-	if (m->rows != m->cols) {
-		fprintf(stderr, "Determinant is not defined for non-square matrices");
+M multiplyMatrix(M m1, M m2) {
+	if (m1->rows != m2->cols || m1->cols != m2->rows) {
+		fprintf(stderr, "Matrices cannot be multiplied due to non-matching row and column sizes");
 		exit(EXIT_FAILURE);
 	}
+	M result = newMatrix(m1->rows, m2->cols);
+	
+	for (int i = 0; i < result->row; i++) {
+		for (int j = 0; j < result->col; j++) {
+			int prodsum = 0;
+			for (int k = 0; k < m1->cols; k++) {
+				prodsum += m1[i][k] * m2[k][j];
+			}
+			result[i][j] = prodsum;
+		}
+	}
 
-
+	return result;
 }
+
+// in progress
+//int determinant(M m) {
+//	if (m->rows != m->cols) {
+//		fprintf(stderr, "Determinant is not defined for non-square matrices");
+//		exit(EXIT_FAILURE);
+//	}
+//}
 
 //free matrix to conserve memory
 void freeMatrix(M m) {
