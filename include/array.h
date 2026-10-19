@@ -7,25 +7,25 @@
 
 typedef struct Array Array;
 
-Array *NewArray(size_t elem_size); 
+Array *NewArray(size_t len, size_t elem_size); 
 
 bool DeleteArray(Array *a); 
 
-bool Replace(Array *a, uint64_t idx, void *val);
+bool ReplaceArray(Array *a, uint64_t idx, void *val);
 
-bool Resize(Array *a, uint64_t size);
+bool ResizeArray(Array *a, uint64_t size);
 
-bool Append(Array *a, void *val);
+bool AppendArray(Array *a, void *val);
 
-void *Get(Array *a, uint64_t idx);
+void *GetArray(Array *a, uint64_t idx);
 
-bool Insert(Array *a, uint64_t idx, void *val);
+bool InsertArray(Array *a, uint64_t idx, void *val);
 
-bool Remove(Array *a, uint64_t idx);
+bool RemoveArray(Array *a, uint64_t idx);
 
-bool Exists(Array *a, void *val);
+bool ExistsArray(Array *a, void *val);
 
-uint64_t Count(Array *a, void *val);
+uint64_t CountArray(Array *a, void *val);
 
 #endif	// ARRAY_H
 

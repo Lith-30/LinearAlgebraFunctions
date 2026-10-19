@@ -12,11 +12,10 @@
 
 typedef struct Timer {
     char name[TIMER_NAME_SIZE];
-    struct timespec start;
-    struct timespec lap;
+    uint64_t start;
 } Timer;
 
-Timer *NewTimer(char *name) {
+static inline Timer *NewTimer(char *name) {
 #ifdef USE_PERF
     Timer *t = malloc(sizeof(Timer));
 
@@ -25,7 +24,8 @@ Timer *NewTimer(char *name) {
         t->name[TIMER_NAME_SIZE - 1] = '\0';
     }
     printf("Timer started with name: %s.\n", name);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(t->start));
+    t->start = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+    // clock_gettime(CPU_CLOCK_CFG, &(t->start));
     return t;
 #else
     return NULL;
@@ -33,24 +33,19 @@ Timer *NewTimer(char *name) {
 #endif
 }
 
-void DeleteTimer(Timer *t) {
+static inline void DeleteTimer(Timer *t) {
 #ifdef USE_PERF
     free(t);
 #endif
 }
 
-void Lap(Timer *t) {
+static inline void Lap(Timer *t) {
 #ifdef USE_PERF
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(t->lap));
+    uint64_t now = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+    uint64_t elapsed = now - t->start;
 
-    long long diff_sec = t->lap.tv_sec - t->start.tv_sec;
-    long long diff_nsec = t->lap.tv_nsec - t->start.tv_nsec;
-
-    // 2. Combine them into a single total nanosecond count
-    long long total_ns = (diff_sec * 1000000000LL) + diff_nsec;
-
-    printf("%s: %05.05lld ns\n", t->name, total_ns);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(t->start));
+    printf("%s: %lld ns\n", t->name, elapsed);
+    t->start = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 #endif
 }
 
