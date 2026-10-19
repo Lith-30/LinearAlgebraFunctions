@@ -7,9 +7,11 @@
 
 typedef struct Array Array;
 
-Array *New(size_t elem_size); 
+Array *NewArray(size_t elem_size); 
 
-bool Delete(Array *a); 
+bool DeleteArray(Array *a); 
+
+bool Replace(Array *a, uint64_t idx, void *val);
 
 bool Resize(Array *a, uint64_t size);
 

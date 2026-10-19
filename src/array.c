@@ -9,8 +9,8 @@
 
 
 typedef struct Array {
-	uint64_t size;		// total number of elements that can be stored
-	uint64_t capacity;	// number of elements that are currently stored
+	uint64_t size;		// number of elements that are currently stored
+	uint64_t capacity;	// total number of elements that can be stored
 	size_t elem_size;	// size of each individual element
 	char *arr;		// raw array
 } Array;
@@ -21,11 +21,11 @@ typedef struct Array {
 // Replace array element at index i with value v
 #define REPLACE(a, i, v) (memcpy(ADDR(a, i), (v), (a)->elem_size))
 
-bool InsideBounds_(Array *a, uint64_t idx) {
-	return idx < a->size && idx >= 0;
+static inline bool InsideBounds_(Array *a, uint64_t idx) {
+	return idx < a->size;
 }
 
-Array *New(size_t elem_size) {
+Array *NewArray(size_t elem_size) {
 	Array *n = malloc(sizeof(Array));
 	n->arr = malloc(elem_size * BASE_LEN);
 	n->size = 0;
@@ -34,7 +34,7 @@ Array *New(size_t elem_size) {
 	return n;
 }
 
-bool Delete(Array *a) {
+bool DeleteArray(Array *a) {
 	free(a->arr);
 	free(a);
 
@@ -43,14 +43,14 @@ bool Delete(Array *a) {
 
 bool Replace(Array *a, uint64_t idx, void *val) {
 	if (!InsideBounds_(a, idx)) {
-		return 0;
+		return false;
 	}
-	//printf("Insert %ln, %d", &idx, *(int *)val);
 	REPLACE(a, idx, val);
+	return true;
 }
 
 bool Resize(Array *a, uint64_t size) {
-	if (a->size < size) {
+	if (a->capacity < size) {
 		char *n_arr = realloc(a->arr, a->elem_size * size);
 		if (n_arr == NULL) {
 			return false;
@@ -64,7 +64,8 @@ bool Resize(Array *a, uint64_t size) {
 
 bool Append(Array *a, void *val) {
 	if (a->size >= a->capacity) {
-		if (!Resize(a, a->size * 2)) return false;
+		uint64_t new_cap = a->capacity == 0 ? BASE_LEN : a->capacity * 2;
+		if (!Resize(a, new_cap)) return false;
 	}
 	++a->size;
 	
@@ -75,25 +76,23 @@ bool Append(Array *a, void *val) {
 
 void *Get(Array *a, uint64_t idx) {
 	if (!InsideBounds_(a, idx)) {
-		// idk what to put here for now
-		return 0;	
+		return NULL;
 	}
 	return ADDR(a, idx);
 }
 
 bool Insert(Array *a, uint64_t idx, void *val) {
 	if (!InsideBounds_(a, idx)) {
-		// idk what to put here for now
-		return 0;
+		return false;
 	}
 
 	if (a->size >= a->capacity) {
-		if (!Resize(a, a->size * 2)) return false;
+		uint64_t new_cap = a->capacity == 0 ? BASE_LEN : a->capacity * 2;
+		if (!Resize(a, new_cap)) return false;
 	}
 
-	for (int i = a->size; i >= idx + 1; --i) {
-		REPLACE(a, i, ADDR(a, i - 1));
-	}
+	// Move elements to the right to make space
+	memmove(ADDR(a, idx + 1), ADDR(a, idx), (a->size - idx) * a->elem_size);
 	REPLACE(a, idx, val);
 	++a->size;
 	return true;
@@ -102,16 +101,16 @@ bool Insert(Array *a, uint64_t idx, void *val) {
 bool Remove(Array *a, uint64_t idx) {
 	if (!InsideBounds_(a, idx)) return false;
 	
-	for (int i = idx; i < a->size; ++i) {
-		REPLACE(a, i, ADDR(a, i + 1));
-		
-	}
+	// Move elements to the left to fill the gap
+	memmove(ADDR(a, idx), ADDR(a, idx + 1), (a->size - idx - 1) * a->elem_size);
 	--a->size;
+
+	return true;
 }
 
 bool Exists(Array *a, void *val) {
-	for (int i = 0; i < a->size; ++i) {
-		if (memcmp(ADDR(a, i), val, a->elem_size)) return true;
+	for (uint64_t i = 0; i < a->size; ++i) {
+		if (memcmp(ADDR(a, i), val, a->elem_size) == 0) return true;
 	}
 
 	return false;
@@ -119,11 +118,9 @@ bool Exists(Array *a, void *val) {
 
 uint64_t Count(Array *a, void *val) {
 	uint64_t count = 0;	
-	for (int i = 0; i < a->size; ++i) {
-		if (memcmp(ADDR(a, i), val, a->elem_size)) ++count;
+	for (uint64_t i = 0; i < a->size; ++i) {
+		if (memcmp(ADDR(a, i), val, a->elem_size) == 0) ++count;
 	}
 
 	return count;
 }
-
-
